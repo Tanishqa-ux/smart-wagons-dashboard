@@ -9,9 +9,11 @@ import {
   LayoutDashboard,
   Lock,
   LogOut,
+  Menu,
   RefreshCw,
   Settings,
   TrainFront,
+  X,
   Wifi,
   WifiOff
 } from "lucide-react";
@@ -355,6 +357,7 @@ function DeviceMasterTable({ devicesMeta }) {
 function App() {
   const [loggedIn, setLoggedIn] = useState(localStorage.getItem("smartWagonsLoggedIn") === "true");
   const [activePage, setActivePage] = useState("dashboard");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [devicesMeta, setDevicesMeta] = useState([]);
   const [rows, setRows] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState(localStorage.getItem("smartWagonsDevice") || "");
@@ -491,11 +494,21 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <div className="brand">
-          <div className="brand-mark">SW</div>
-          <div>
-            <strong>Smart Wagons</strong>
-            <span>Brake Monitoring System</span>
+        <div className="header-brand-row">
+          <button
+            className="menu-toggle"
+            onClick={() => setMenuOpen(true)}
+            type="button"
+            aria-label="Open navigation"
+          >
+            <Menu size={22} />
+          </button>
+          <div className="brand">
+            <div className="brand-mark">SW</div>
+            <div>
+              <strong>Smart Wagons</strong>
+              <span>Brake Monitoring System</span>
+            </div>
           </div>
         </div>
         <div className="controls">
@@ -526,7 +539,19 @@ function App() {
       </header>
 
       <div className="app-body">
-        <aside className="sidebar">
+        <button
+          className={`drawer-backdrop ${menuOpen ? "show" : ""}`}
+          onClick={() => setMenuOpen(false)}
+          type="button"
+          aria-label="Close navigation"
+        />
+        <aside className={`sidebar ${menuOpen ? "open" : ""}`}>
+          <div className="sidebar-head">
+            <strong>Menu</strong>
+            <button onClick={() => setMenuOpen(false)} type="button" aria-label="Close navigation">
+              <X size={20} />
+            </button>
+          </div>
           <nav>
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -534,7 +559,10 @@ function App() {
                 <button
                   key={item.id}
                   className={activePage === item.id ? "active" : ""}
-                  onClick={() => setActivePage(item.id)}
+                  onClick={() => {
+                    setActivePage(item.id);
+                    setMenuOpen(false);
+                  }}
                   type="button"
                 >
                   <Icon size={18} />
@@ -856,3 +884,4 @@ function App() {
 }
 
 export default App;
+
