@@ -125,6 +125,23 @@ button {
   z-index: 5;
 }
 
+.header-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.menu-toggle {
+  display: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: #eef4f8;
+  color: #0b56c5;
+  place-items: center;
+}
+
 .brand {
   min-width: 300px;
   display: flex;
@@ -235,6 +252,33 @@ button {
   flex-direction: column;
   gap: 14px;
   min-height: calc(100vh - 76px);
+}
+
+.sidebar-head {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 4px 8px;
+}
+
+.sidebar-head strong {
+  color: #142033;
+  font-size: 18px;
+}
+
+.sidebar-head button {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: #eef4f8;
+  color: #0b56c5;
+  display: grid;
+  place-items: center;
+}
+
+.drawer-backdrop {
+  display: none;
 }
 
 nav {
@@ -707,21 +751,60 @@ th {
     grid-template-rows: auto 1fr;
   }
 
-  .app-header,
-  .app-body {
-    grid-template-columns: 1fr;
-  }
-
   .app-header {
     display: grid;
+    gap: 12px;
+    padding: 10px;
+  }
+
+  .header-brand-row {
+    width: 100%;
+  }
+
+  .menu-toggle {
+    display: grid;
+    flex: 0 0 auto;
+  }
+
+  .app-body {
+    display: block;
   }
 
   .sidebar {
-    min-height: auto;
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(310px, 86vw);
+    min-height: 100vh;
+    z-index: 20;
+    transform: translateX(-105%);
+    transition: transform 180ms ease;
+    box-shadow: 18px 0 45px rgba(15, 23, 42, 0.18);
+    overflow-y: auto;
+    padding: 14px;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-head {
+    display: flex;
+  }
+
+  .drawer-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 19;
+    background: rgba(15, 23, 42, 0.38);
+  }
+
+  .drawer-backdrop.show {
+    display: block;
   }
 
   nav {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .gauges {
@@ -731,11 +814,10 @@ th {
 
 @media (max-width: 640px) {
   .content {
-    padding: 10px;
+    padding: 8px;
   }
 
   .controls,
-  nav,
   .gauges,
   .status-details,
   .alert-summary {
@@ -749,11 +831,75 @@ th {
     width: 100%;
   }
 
+  .controls {
+    gap: 8px;
+  }
+
+  .icon-button {
+    width: 100%;
+  }
+
+  .panel {
+    padding: 10px;
+  }
+
+  .panel-head {
+    align-items: flex-start;
+    display: grid;
+  }
+
+  .panel-head button {
+    width: 100%;
+  }
+
+  .main-grid,
+  .lower-grid,
+  .table-grid {
+    gap: 8px;
+  }
+
   .brand {
     min-width: 0;
+    gap: 8px;
+  }
+
+  .brand-mark {
+    width: 40px;
+    height: 40px;
   }
 
   .brand strong {
-    font-size: 21px;
+    font-size: 18px;
+  }
+
+  .brand span {
+    font-size: 11px;
+  }
+
+  .gauge-card {
+    min-height: 154px;
+  }
+
+  .gauge-ring {
+    width: min(118px, 100%);
+    margin-top: 12px;
+  }
+
+  .gauge-ring strong {
+    font-size: 24px;
+  }
+
+  .metric strong {
+    font-size: 17px;
+  }
+
+  table {
+    min-width: 680px;
+  }
+
+  th,
+  td {
+    padding: 9px;
+    font-size: 12px;
   }
 }
