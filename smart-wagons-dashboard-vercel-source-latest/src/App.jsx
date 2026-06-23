@@ -289,7 +289,7 @@ function PressureGauge({ label, sublabel, value, color, max = 10 }) {
       </div>
       <div
         className="gauge-ring"
-        style={{ "--gauge-color": color, "--gauge-value": `${percentage}%` }}
+        style={{ "--gauge-color": color, "--gauge-sweep": `${percentage / 2}%` }}
       >
         <div>
           <strong>{value.toFixed(2)}</strong>
