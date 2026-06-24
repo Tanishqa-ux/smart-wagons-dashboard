@@ -37,8 +37,8 @@ const SUPABASE_KEY =
 const PRESSURE_TABLE = import.meta.env.VITE_PRESSURE_TABLE || "bpc_pressure";
 const DEVICE_TABLE = import.meta.env.VITE_DEVICE_TABLE || "coaches_railway";
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "admin123";
-const OFFLINE_AFTER_SECONDS = Number(import.meta.env.VITE_OFFLINE_AFTER_SECONDS || 120);
-const TRAIN_RUNNING_AFTER_SECONDS = Number(import.meta.env.VITE_TRAIN_RUNNING_AFTER_SECONDS || 120);
+const OFFLINE_AFTER_SECONDS = Math.max(120, Number(import.meta.env.VITE_OFFLINE_AFTER_SECONDS || 120));
+const TRAIN_RUNNING_AFTER_SECONDS = Math.max(120, Number(import.meta.env.VITE_TRAIN_RUNNING_AFTER_SECONDS || 120));
 const REFRESH_INTERVAL_MS = Number(import.meta.env.VITE_REFRESH_INTERVAL_MS || 5000);
 
 const supabase =
@@ -572,10 +572,14 @@ function App() {
     return filtered.sort((a, b) => parseDashboardTime(b.timestamp) - parseDashboardTime(a.timestamp));
   }, [deviceRows, selectedWagon]);
 
-  const latest = wagonRows[0] || null;
+  const latestDeviceRows = useMemo(() => {
+    return [...deviceRows].sort((a, b) => parseDashboardTime(b.timestamp) - parseDashboardTime(a.timestamp));
+  }, [deviceRows]);
+  const latest = latestDeviceRows[0] || wagonRows[0] || null;
   const status = latest ? getBrakeState(latest) : { label: "No Data", tone: "offline", severity: "Warning" };
   const offline = !latest || secondsSince(latest.timestamp) > OFFLINE_AFTER_SECONDS;
-  const alerts = wagonRows.filter((row) => {
+  const visibleRows = wagonRows.length ? wagonRows : latestDeviceRows;
+  const alerts = visibleRows.filter((row) => {
     const rowStatus = getBrakeState(row);
     return ["critical", "offline"].includes(rowStatus.tone) || Boolean(String(row.brakeFault || "").trim());
   });
@@ -625,7 +629,7 @@ function App() {
       return fault && fault.toLowerCase() !== "null";
     });
   }, [allRows]);
-  const chartData = [...wagonRows]
+  const chartData = [...visibleRows]
     .slice(0, 40)
     .reverse()
     .map((row) => ({
@@ -809,7 +813,7 @@ function App() {
             <div className="panel chart-panel">
               <div className="panel-head">
                 <h2>Pressure Timeline</h2>
-                <button onClick={() => exportCsv(wagonRows)}>
+                <button onClick={() => exportCsv(visibleRows)}>
                   <Download size={16} />
                   Export
                 </button>
@@ -871,7 +875,7 @@ function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {wagonRows.slice(0, 25).map((row, index) => {
+                    {visibleRows.slice(0, 25).map((row, index) => {
                       const rowStatus = getBrakeState(row);
                       return (
                         <tr key={`${row.id}-${index}`}>
@@ -968,12 +972,12 @@ function App() {
             <section className="panel table-panel">
               <div className="panel-head">
                 <h2>Event History</h2>
-                <button onClick={() => exportCsv(wagonRows)}>
+                <button onClick={() => exportCsv(visibleRows)}>
                   <Download size={16} />
                   Export
                 </button>
               </div>
-              <RecordsTable rows={wagonRows} />
+              <RecordsTable rows={visibleRows} />
             </section>
           ) : null}
 
@@ -998,18 +1002,18 @@ function App() {
             <>
               <section className="status-details page-metrics">
                 <Metric label="Report Rows" value={allRows.length} detail="Loaded records" />
-                <Metric label="Selected Rows" value={wagonRows.length} detail="Filtered records" />
+                <Metric label="Selected Rows" value={visibleRows.length} detail="Filtered records" />
                 <Metric label="Fault Rows" value={faultRows.length} detail="Fault records" />
               </section>
               <section className="panel table-panel">
                 <div className="panel-head">
                   <h2>Reports</h2>
-                  <button onClick={() => exportCsv(wagonRows.length ? wagonRows : allRows)}>
+                  <button onClick={() => exportCsv(visibleRows.length ? visibleRows : allRows)}>
                     <Download size={16} />
                     Export CSV
                   </button>
                 </div>
-                <RecordsTable rows={wagonRows.length ? wagonRows : allRows} />
+                <RecordsTable rows={visibleRows.length ? visibleRows : allRows} />
               </section>
             </>
           ) : null}
