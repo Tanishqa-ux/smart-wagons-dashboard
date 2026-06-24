@@ -1079,7 +1079,7 @@ th {
   }
 
   .gauge-card {
-    min-height: 88px;
+    min-height: 118px;
     border-radius: 12px;
     padding: 8px;
     display: grid;
@@ -1087,30 +1087,36 @@ th {
   }
 
   .gauge-ring {
-    width: 100%;
-    height: auto;
-    min-height: 30px;
-    margin: 4px 0 2px;
-    overflow: visible;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
+    width: min(88px, 100%);
+    height: 48px;
+    min-height: 0;
+    margin: 4px auto 2px;
+    overflow: hidden;
+    border-radius: 88px 88px 0 0;
+    background:
+      radial-gradient(circle at 50% 100%, #ffffff 0 60%, transparent 61%),
+      conic-gradient(from 270deg at 50% 100%, var(--gauge-color) var(--gauge-sweep), #dfe8f0 0 50%, transparent 0);
+    box-shadow: inset 0 0 0 1px #edf2f7;
     place-items: center;
   }
 
   .gauge-ring::after {
-    display: none;
+    display: block;
+    width: 58%;
   }
 
   .gauge-ring > div {
-    position: static;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 3px;
     display: grid;
     justify-items: center;
     gap: 0;
   }
 
   .gauge-ring strong {
-    font-size: 22px;
+    font-size: 15px;
   }
 
   .gauge-ring small {

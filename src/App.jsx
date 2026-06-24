@@ -465,14 +465,24 @@ function App() {
     const deviceList = devicesResult.error ? [] : (devicesResult.data || []).map(normalizedDevice);
     const metaByDevice = new Map(deviceList.map((device) => [device.deviceId, device]));
 
-    let result = await supabase.from(PRESSURE_TABLE).select("*").order("timestamp", { ascending: false }).limit(500);
-    if (result.error) {
-      result = await supabase.from(PRESSURE_TABLE).select("*").order("created_at", { ascending: false }).limit(500);
+    const queries = deviceList.length
+      ? deviceList.map((device) =>
+          supabase
+            .from(PRESSURE_TABLE)
+            .select("*")
+            .eq("device_id", device.deviceId)
+            .order("timestamp", { ascending: false })
+            .limit(80)
+        )
+      : [supabase.from(PRESSURE_TABLE).select("*").order("timestamp", { ascending: false }).limit(500)];
+    const results = await Promise.all(queries);
+    let fetchError = results.find((item) => item.error)?.error || null;
+    let data = results.flatMap((item) => item.data || []);
+    if (fetchError) {
+      const fallback = await supabase.from(PRESSURE_TABLE).select("*").order("id", { ascending: false }).limit(800);
+      fetchError = fallback.error;
+      data = fallback.data || [];
     }
-    if (result.error) {
-      result = await supabase.from(PRESSURE_TABLE).select("*").order("id", { ascending: false }).limit(500);
-    }
-    const { data, error: fetchError } = result;
     if (fetchError) {
       setError(fetchError.message);
       setRows([]);
