@@ -9,7 +9,8 @@ Live web dashboard for Smart Wagons brake binding monitoring using Supabase real
 3. `VITE_DEVICE_TABLE` should be `coaches_railway`.
 4. Set `VITE_OFFLINE_AFTER_SECONDS`. The dashboard currently uses `120`, so a device is offline only after 2 minutes without data.
 5. Set `VITE_TRAIN_RUNNING_AFTER_SECONDS`. This controls the train running/not-running board. The dashboard currently uses `120`.
-6. Run:
+6. Set `VITE_REFRESH_INTERVAL_MS`. The dashboard currently uses `5000` as a stable backup refresh while realtime updates are active.
+7. Run:
 
 ```bash
 npm install

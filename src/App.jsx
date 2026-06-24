@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import {
   AlertTriangle,
@@ -39,6 +39,7 @@ const DEVICE_TABLE = import.meta.env.VITE_DEVICE_TABLE || "coaches_railway";
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "admin123";
 const OFFLINE_AFTER_SECONDS = Number(import.meta.env.VITE_OFFLINE_AFTER_SECONDS || 120);
 const TRAIN_RUNNING_AFTER_SECONDS = Number(import.meta.env.VITE_TRAIN_RUNNING_AFTER_SECONDS || 120);
+const REFRESH_INTERVAL_MS = Number(import.meta.env.VITE_REFRESH_INTERVAL_MS || 5000);
 
 const supabase =
   SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
@@ -457,51 +458,68 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [lastRefresh, setLastRefresh] = useState(null);
+  const loadSequenceRef = useRef(0);
 
   async function loadRows() {
     if (!supabase) return;
+    const loadId = loadSequenceRef.current + 1;
+    loadSequenceRef.current = loadId;
     setLoading(true);
-    const devicesResult = await supabase.from(DEVICE_TABLE).select("*").order("id", { ascending: true });
-    const deviceList = devicesResult.error ? [] : (devicesResult.data || []).map(normalizedDevice);
-    const metaByDevice = new Map(deviceList.map((device) => [device.deviceId, device]));
+    try {
+      const devicesResult = await supabase.from(DEVICE_TABLE).select("*").order("id", { ascending: true });
+      const deviceList = devicesResult.error ? [] : (devicesResult.data || []).map(normalizedDevice);
+      const metaByDevice = new Map(deviceList.map((device) => [device.deviceId, device]));
 
-    const queries = deviceList.length
-      ? deviceList.map((device) =>
-          supabase
-            .from(PRESSURE_TABLE)
-            .select("*")
-            .eq("device_id", device.deviceId)
-            .order("timestamp", { ascending: false })
-            .limit(80)
-        )
-      : [supabase.from(PRESSURE_TABLE).select("*").order("timestamp", { ascending: false }).limit(500)];
-    const results = await Promise.all(queries);
-    let fetchError = results.find((item) => item.error)?.error || null;
-    let data = results.flatMap((item) => item.data || []);
-    if (fetchError) {
-      const fallback = await supabase.from(PRESSURE_TABLE).select("*").order("id", { ascending: false }).limit(800);
-      fetchError = fallback.error;
-      data = fallback.data || [];
-    }
-    if (fetchError) {
-      setError(fetchError.message);
-      setRows([]);
-    } else {
-      setError("");
-      setDevicesMeta(deviceList);
-      setRows((data || []).map((row) => {
+      const queries = deviceList.length
+        ? deviceList.map((device) =>
+            supabase
+              .from(PRESSURE_TABLE)
+              .select("*")
+              .eq("device_id", device.deviceId)
+              .order("timestamp", { ascending: false })
+              .limit(80)
+          )
+        : [supabase.from(PRESSURE_TABLE).select("*").order("timestamp", { ascending: false }).limit(500)];
+      const results = await Promise.all(queries);
+      if (loadId !== loadSequenceRef.current) return;
+
+      const successfulResults = results.filter((item) => !item.error);
+      let fetchError = successfulResults.length ? null : results.find((item) => item.error)?.error || null;
+      let data = successfulResults.flatMap((item) => item.data || []);
+      if (fetchError) {
+        const fallback = await supabase.from(PRESSURE_TABLE).select("*").order("id", { ascending: false }).limit(800);
+        if (loadId !== loadSequenceRef.current) return;
+        fetchError = fallback.error;
+        data = fallback.data || [];
+      }
+      if (fetchError) {
+        setError(fetchError.message);
+        return;
+      }
+
+      const normalizedRows = (data || []).map((row) => {
         const readingDevice = readField(row, "deviceId", "");
         return normalized(row, metaByDevice.get(readingDevice));
-      }));
+      });
+      setError("");
+      setDevicesMeta(deviceList);
+      setRows((previousRows) => (normalizedRows.length ? normalizedRows : previousRows));
       setLastRefresh(new Date());
+    } catch (caughtError) {
+      if (loadId === loadSequenceRef.current) {
+        setError(caughtError?.message || "Unable to refresh live data");
+      }
+    } finally {
+      if (loadId === loadSequenceRef.current) {
+        setLoading(false);
+      }
     }
-    setLoading(false);
   }
 
   useEffect(() => {
     if (!loggedIn) return undefined;
     loadRows();
-    const interval = window.setInterval(loadRows, 1000);
+    const interval = window.setInterval(loadRows, REFRESH_INTERVAL_MS);
     return () => window.clearInterval(interval);
   }, [loggedIn]);
 
