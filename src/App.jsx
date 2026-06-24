@@ -37,8 +37,8 @@ const SUPABASE_KEY =
 const PRESSURE_TABLE = import.meta.env.VITE_PRESSURE_TABLE || "bpc_pressure";
 const DEVICE_TABLE = import.meta.env.VITE_DEVICE_TABLE || "coaches_railway";
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "admin123";
-const OFFLINE_AFTER_SECONDS = Number(import.meta.env.VITE_OFFLINE_AFTER_SECONDS || 5);
-const TRAIN_RUNNING_AFTER_SECONDS = Number(import.meta.env.VITE_TRAIN_RUNNING_AFTER_SECONDS || 60);
+const OFFLINE_AFTER_SECONDS = Number(import.meta.env.VITE_OFFLINE_AFTER_SECONDS || 120);
+const TRAIN_RUNNING_AFTER_SECONDS = Number(import.meta.env.VITE_TRAIN_RUNNING_AFTER_SECONDS || 120);
 
 const supabase =
   SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
